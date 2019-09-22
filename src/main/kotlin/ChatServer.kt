@@ -2,7 +2,7 @@ import java.lang.Exception
 import java.net.ServerSocket
 /*
 Chat Server
-Niko Holopainen 1805828
+Niko Holopainen
 
 ChatServer class opens a new ServerSocket and starts listening to incoming connections
  */

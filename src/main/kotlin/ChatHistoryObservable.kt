@@ -1,6 +1,6 @@
 /*
 Chat Server
-Niko Holopainen 1805828
+Niko Holopainen
 
 Interface for observer pattern methods
  */

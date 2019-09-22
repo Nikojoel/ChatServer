@@ -6,7 +6,7 @@ import java.lang.Exception
 import java.util.*
 /*
 Chat Server
-Niko Holopainen 1805828
+Niko Holopainen
 
 ChatConnector class has all the logic for user name inputting and the chatting operations
  */

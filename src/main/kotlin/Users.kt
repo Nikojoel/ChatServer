@@ -1,6 +1,6 @@
 /*
 Chat Server
-Niko Holopainen 1805828
+Niko Holopainen
 
 Singleton class Users has logic for registering, removing and checking the user names
  */

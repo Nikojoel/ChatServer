@@ -1,7 +1,7 @@
 import kotlinx.serialization.Serializable
 /*
 Chat Server
-Niko Holopainen 1805828
+Niko Holopainen
  */
 @Serializable
 class ChatMessage(val user: String, val message: String) {
