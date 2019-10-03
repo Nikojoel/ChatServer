@@ -12,7 +12,7 @@ object Users {
     // Username register
     fun registerUsername(user: String) {
         users.add(user)
-        ChatHistory.topChatters.put(user,0)
+        ChatHistory.topChatters[user] = 0
     }
 
     // Username removal
@@ -28,7 +28,7 @@ object Users {
 
     // User list
     fun getUsers(): String {
-        var temp = "\n"
+        var temp = ""
         for (n in users) {
             temp += "$n\n"
         }

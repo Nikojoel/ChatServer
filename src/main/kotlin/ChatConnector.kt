@@ -5,10 +5,8 @@ import java.io.PrintStream
 import java.lang.Exception
 import java.util.*
 /*
-Chat Server
+Chat server & client
 Niko Holopainen
-
-ChatConnector class has all the logic for user name inputting and the chatting operations
  */
 
 class ChatConnector(ins: InputStream, outs: OutputStream) : ChatHistoryObserver, Runnable {
@@ -18,95 +16,69 @@ class ChatConnector(ins: InputStream, outs: OutputStream) : ChatHistoryObserver,
     private var userName = ""
 
     override fun run() {
-        // Username inputting
-        while(true) {
-            outPut.println("Type a username")
-            userName = scanner.nextLine()
 
-            // Check if username is already taken
-            if (Users.checkUsername(userName)) {
-                Users.registerUsername(userName)
-                outPut.println("Welcome to the server $userName!")
-                outPut.println("You can now start chatting")
-                outPut.println("Type .commands to see available commands\n")
-                ChatHistory.notifyObservers(ChatMessage(userName, "has connected to the server"),this)
-                break
-
-            } else if (!Users.checkUsername(userName)) {
-                outPut.println("Username is already taken")
-            }
-        }
-        try {
-            // Chatting
+            // Username checking
             while (true) {
+                val userQuery = scanner.nextLine() // Input from client
 
-                ChatHistory.registerObserver(this)
-                val userMessage = scanner.nextLine()
+                // Parse to ChatMessage (command, user, message)
+                val queryToChatMessage = Json.parse(ChatMessage.serializer(), userQuery)
 
-                // Commands
-                if (userMessage == ".quit") {
-                    outPut.println("Disconnected from server")
-                    ChatHistory.notifyObservers(ChatMessage(userName, "has disconnected from the server"), this)
-                    ChatHistory.deregisterObserver(this)
-                    Users.removeUsername(userName)
-                    outPut.flush()
+                // Check that the user is not registered and that the username is valid
+                if (Users.checkUsername(queryToChatMessage.user) && queryToChatMessage.user != "") {
+                    Users.registerUsername(queryToChatMessage.user)
+                    userName = queryToChatMessage.user
+                    ChatHistory.registerObserver(this)
+                    Users.registerUsername(userName)
+                    newMessage(ChatMessage("valid", queryToChatMessage.user,"valid"))
+                    ChatHistory.notifyObservers(ChatMessage("say",userName,"has joined the chat"))
                     break
-
-                } else if (userMessage == ".commands") {
-                    outPut.println(getCommands())
-
-                } else if (userMessage == ".users") {
-                    outPut.println(Users.getUsers())
-
-                } else if (userMessage == ".top") {
-                    outPut.println(ChatHistory.getTop())
-
-                } else if (userMessage == ".history") {
-                    outPut.println(ChatHistory.getHistory())
-
-                } else if (userMessage == ".private") {
-                    outPut.println("Type the receiver username and message (user:message)")
-
-                    // Private message
-                    val line = scanner.nextLine()
-                    try {
-                        val receiver = line.split(":")
-                        val privateMessage = ChatMessage(receiver[0], receiver[1])
-                    // Check that the user exists
-                    if (!Users.checkUsername(privateMessage.user)) {
-                        ChatHistory.notifyPrivateObserver(privateMessage,this)
-                    } else {
-                        outPut.println("Invalid username")
-                    }
-                } catch (e: Exception) {
-                    outPut.println("Invalid input")
-                    println(e)
-                }
-                // Invalid commands
-                } else if (userMessage.split(".")[0] == "") {
-                    outPut.println("Invalid command")
-
-                } else {
-                    val chatMessage = ChatMessage(userName,userMessage)
-
-                    /* Stringify to JSON {"user","message"}
-                    val jsonMessage = Json.stringify(ChatMessage.serializer(),chatMessage)
-
-                    // Parse to ChatMessage (user, message)
-                    val jsonToChatMessage = Json.parse(ChatMessage.serializer(), jsonMessage)
-                    */
-
-                    ChatHistory.insert(chatMessage)
-                    ChatHistory.notifyObservers(chatMessage, this)
+                    // If the user already exists or is invalid, sends invalid message to the client
+                } else if (!Users.checkUsername(queryToChatMessage.user) || queryToChatMessage.user == "") {
+                    val invalidName = ChatMessage("invalid", queryToChatMessage.user, "invalid")
+                    newMessage(invalidName)
                 }
             }
-        } catch (e: Exception) {
-            println(e)
-        }
+            try {
+                // Chatting
+                while (true) {
+                    val incomingMessage = scanner.nextLine() // Input from client
+
+                    // Parse to ChatMessage (command, user, message)
+                    val jsonToChatMessage = Json.parse(ChatMessage.serializer(), incomingMessage)
+
+                    // Statements for the commands
+                    when (jsonToChatMessage.command) {
+                        "say" -> {
+                            ChatHistory.insert(jsonToChatMessage)
+                            ChatHistory.notifyObservers(jsonToChatMessage)
+                        }
+                        "disconnect" -> {
+                            ChatHistory.deregisterObserver(this)
+                            Users.removeUsername(userName)
+                            ChatHistory.notifyObservers(ChatMessage("say",userName,"has left the chat"))
+
+                        }
+                        "users" -> {
+                            newMessage(ChatMessage("users","",Users.getUsers()))
+                        }
+                        "history" -> {
+                            newMessage(ChatMessage("history","",ChatHistory.getHistory()))
+                        }
+                        "top" -> {
+                            newMessage(ChatMessage("top","",ChatHistory.getTop()))
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                println(e)
+                ChatHistory.deregisterObserver(this)
+                Users.removeUsername(userName)
+            }
     }
 
     override fun newMessage(message: ChatMessage) {
-        outPut.println(message)
+        outPut.println(Json.stringify(ChatMessage.serializer(), message))
     }
 
     override fun getCommands(): String {

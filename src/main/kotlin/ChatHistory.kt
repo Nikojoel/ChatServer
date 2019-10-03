@@ -12,15 +12,15 @@ object ChatHistory: ChatHistoryObservable {
     val topChatters = mutableMapOf<String,Int>()
 
     // Observer pattern methods
-    override fun notifyObservers(message: ChatMessage, myself: ChatConnector) {
-        observers.minus(myself).forEach{it.newMessage(message)}
+    override fun notifyObservers(message: ChatMessage) {
+        observers.forEach{it.newMessage(message)}
     }
 
     // Private message
     override fun notifyPrivateObserver(message: ChatMessage, myself: ChatConnector) {
         for (n in observers) {
             if (n.name() == message.user) {
-                n.newMessage(ChatMessage("${myself.name()} whispers",message.message))
+                n.newMessage(ChatMessage("${myself.name()} whispers",message.message, message.message))
             }
         }
     }
@@ -45,7 +45,7 @@ object ChatHistory: ChatHistoryObservable {
 
     // Chat history
     override fun getHistory(): String {
-        var temp = "\n"
+        var temp = ""
         for (n in messages) {
             temp += "${n.user}: ${n.message}\n"
         }

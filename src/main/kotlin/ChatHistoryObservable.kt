@@ -9,7 +9,7 @@ interface ChatHistoryObservable {
 
     fun registerObserver(observer: ChatHistoryObserver)
     fun deregisterObserver(observer: ChatHistoryObserver)
-    fun notifyObservers(message: ChatMessage, myself: ChatConnector)
+    fun notifyObservers(message: ChatMessage)
     fun notifyPrivateObserver(message: ChatMessage, myself: ChatConnector)
     fun getHistory(): String
     fun insert(message: ChatMessage)
